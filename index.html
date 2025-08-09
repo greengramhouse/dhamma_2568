@@ -9,6 +9,8 @@
       href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <script src="https://cdn.jsdelivr.net/npm/pdfmake@0.2.7/build/pdfmake.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfmake@0.2.7/build/vfs_fonts.js"></script>
     <style>
       body {
         font-family: "Sarabun", sans-serif;
@@ -16,7 +18,6 @@
     </style>
   </head>
   <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-    <!-- Header -->
     <div
       class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-8 shadow-lg"
     >
@@ -135,15 +136,31 @@
       </div>
 
       <!-- Classroom Table Results -->
+      <!-- Classroom Table Results -->
       <div
         id="classroomResults"
         class="hidden bg-white rounded-xl shadow-lg p-6 mb-8"
       >
-        <h3 class="text-xl font-semibold text-gray-800 mb-4">
-          ผลการค้นหาจากห้องเรียน
-        </h3>
-        <div class="overflow-x-auto">
-          <table class="w-full table-auto">
+        <div class="flex justify-end items-center mb-4 gap-2">
+          <button
+            id="printClassroomBtn"
+            onclick="printClassroomTable()"
+            class="hidden bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+          >
+            🖨️ พิมพ์รายชื่อ
+          </button>
+
+          <button
+            id="printPdfBtn"
+            onclick="printPdfClassroom()"
+            class="hidden bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+          >
+            📄 พิมพ์ PDF
+          </button>
+        </div>
+
+        <div class="overflow-x-auto" id="classroomTableWrapper">
+          <table class="w-full table-auto" id="classroomTable">
             <thead>
               <tr class="bg-blue-50">
                 <th
@@ -457,19 +474,44 @@
       }
 
       // Display classroom results as table
+      // กำหนดฟอนต์ pdfMake (ใช้ตามที่คุณให้มา)
+      pdfMake.fonts = {
+        THSarabunNew: {
+          normal: "https://guykorat.github.io/font/THSarabunNew.ttf",
+          bold: "https://guykorat.github.io/font/Sarabun-ExtraBold.ttf",
+        },
+        Charm: {
+          normal: "https://guykorat.github.io/font/Charm-Bold.ttf",
+          bold: "https://guykorat.github.io/font/Charm-Regular.ttf",
+        },
+        Prompt: {
+          normal: "https://guykorat.github.io/font/Prompt-Regular.ttf",
+          bold: "https://guykorat.github.io/font/Prompt-Bold.ttf",
+        },
+      };
+
+      let currentClassroomData = []; // เก็บข้อมูลปัจจุบันของตาราง
+
       function displayClassroomResults(results, classroom) {
         const tableBody = document.getElementById("classroomTableBody");
         const resultsSection = document.getElementById("classroomResults");
         const noResults = document.getElementById("noResults");
+        const printBtn = document.getElementById("printClassroomBtn");
+        const printPdfBtn = document.getElementById("printPdfBtn");
 
         if (results.length === 0) {
           resultsSection.classList.add("hidden");
           noResults.classList.remove("hidden");
+          printBtn.classList.add("hidden");
+          printPdfBtn.classList.add("hidden");
+          currentClassroomData = [];
           return;
         }
 
         noResults.classList.add("hidden");
         resultsSection.classList.remove("hidden");
+        printBtn.classList.remove("hidden");
+        printPdfBtn.classList.remove("hidden");
 
         tableBody.innerHTML = "";
 
@@ -487,29 +529,125 @@
             }[item.statust_test] || "bg-gray-100 text-gray-800";
 
           row.innerHTML = `
-                    <td class="px-4 py-3 text-sm text-gray-900">${
-                      index + 1
-                    }</td>
-                    <td class="px-4 py-3 text-sm text-gray-900">${
-                      item.gender
-                    }</td>
-                    <td class="px-4 py-3 text-sm font-medium text-gray-900">${
-                      item.name
-                    }</td>
-                    <td class="px-4 py-3 text-sm font-medium text-gray-900">${
-                      item.surname
-                    }</td>
-                    <td class="px-4 py-3 text-sm text-gray-900">${
-                      item.classroom
-                    }</td>
-                    <td class="px-4 py-3">
-                        <span class="px-2 py-1 rounded-full text-xs font-medium ${statusColor}">
-                            ${item.statust_test}
-                        </span>
-                    </td>
-                `;
+      <td class="px-4 py-3 text-sm text-gray-900">${index + 1}</td>
+      <td class="px-4 py-3 text-sm text-gray-900">${item.gender}</td>
+      <td class="px-4 py-3 text-sm text-gray-900">${item.name}</td>
+      <td class="px-4 py-3 text-sm font-medium text-gray-900">${
+        item.surname
+      }</td>
+      <td class="px-4 py-3 text-sm text-gray-900">${item.classroom}</td>
+      <td class="px-4 py-3">
+          <span class="px-2 py-1 rounded-full text-xs font-medium ${statusColor}">
+              ${item.statust_test}
+          </span>
+      </td>
+    `;
           tableBody.appendChild(row);
         });
+
+        currentClassroomData = results;
+      }
+
+      // ฟังก์ชันพิมพ์ pdf
+      function printPdfClassroom() {
+        if (!currentClassroomData.length) {
+          alert("ไม่มีข้อมูลให้พิมพ์ PDF");
+          return;
+        }
+
+        // สร้าง body ตารางใน PDF
+        const body = [
+          [
+            { text: "ลำดับ", style: "tableHeader" },
+            { text: "คำนำหน้า", style: "tableHeader" },
+            { text: "ชื่อ", style: "tableHeader" },
+            { text: "นามสกุล", style: "tableHeader" },
+            { text: "ห้องเรียน", style: "tableHeader" },
+            { text: "สถานะ", style: "tableHeader" },
+          ],
+        ];
+
+        currentClassroomData.forEach((item, index) => {
+          body.push([
+            index + 1,
+            item.gender || "-",
+            item.name || "-",
+            item.surname || "-",
+            item.classroom || "-",
+            item.statust_test || "-",
+          ]);
+        });
+
+        const docDefinition = {
+          content: [
+            { text: "รายชื่อนักเรียนจากการค้นหาห้องเรียน", style: "header" },
+            {
+              style: "tableExample",
+              table: {
+                headerRows: 1,
+                widths: ["auto", "*", "*", "*", "auto", "auto"],
+                body: body,
+              },
+              layout: {
+                fillColor: function (rowIndex) {
+                  if (rowIndex === 0) {
+                    return "#CCCCCC"; // สี header
+                  }
+                  // rowIndex 1 ขึ้นไปคือข้อมูลจริง (ลบ 1 เพราะ body index -1)
+                  const dataIndex = rowIndex - 1;
+                  if (
+                    currentClassroomData[dataIndex] &&
+                    currentClassroomData[dataIndex].statust_test ===
+                      "ไม่มีรายชื่อสอบ"
+                  ) {
+                    return "#f8d7da"; // สีแดงอ่อนพื้นหลังแถวที่สถานะเป็น ไม่มีรายชื่อสอบ
+                  }
+                  return null;
+                },
+              },
+            },
+          ],
+          defaultStyle: {
+            font: "THSarabunNew",
+            fontSize: 16,
+          },
+          styles: {
+            header: {
+              fontSize: 20,
+              bold: true,
+              marginBottom: 15,
+            },
+            tableExample: {
+              margin: [0, 5, 0, 15],
+            },
+            tableHeader: {
+              bold: true,
+              fontSize: 12,
+              color: "black",
+            },
+          },
+          pageOrientation: "portrait",
+          pageSize: "A4",
+        };
+
+        pdfMake.createPdf(docDefinition).open();
+      }
+
+      // ฟังก์ชันสั่งพิมพ์เฉพาะตารางห้องเรียน
+      function printClassroomTable() {
+        const printContents = document.getElementById(
+          "classroomTableWrapper"
+        ).innerHTML;
+        const originalContents = document.body.innerHTML;
+
+        document.body.innerHTML = printContents;
+
+        window.print();
+
+        document.body.innerHTML = originalContents;
+
+        // รีโหลดสคริปต์หลังพิมพ์ (ถ้าจำเป็น)
+        window.location.reload();
       }
 
       // Hide results
