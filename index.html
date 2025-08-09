@@ -19,15 +19,33 @@
   </head>
   <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <div
-      class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-8 shadow-lg"
+      class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-3 shadow-lg"
     >
       <div class="container mx-auto px-4 text-center">
-        <h6 class="text-md font-bold mb-2">ธรรมศึกษา 2568 โรงเรียนชุมชนวัดไทยงาม</h6>
+        <h1 class="text-xl font-bold mb-2">ธรรมศึกษา 2568</h1>
       </div>
     </div>
 
     <div class="container mx-auto px-4 py-8">
-      <!-- Loading indicator -->
+        <!-- Splash Screen -->
+  <div
+    id="splashScreen"
+    class="fixed inset-0 bg-blue-300 flex flex-col items-center justify-center z-50"
+  >
+    <img
+      src="https://res.cloudinary.com/gukkghu/image/upload/v1646575846/gukkghu/%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B8%AD%E0%B8%AD%E0%B8%81%E0%B9%81%E0%B8%9A%E0%B8%9A%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B8%A1%E0%B8%B5%E0%B8%8A%E0%B8%B7%E0%B9%88%E0%B8%AD_aytvpq.png"
+      alt="โลโก้"
+      class="w-32 mb-6"
+    />
+    <h1 class="text-3xl font-bold text-blue-700">ยินดีต้อนรับ</h1>
+  </div>
+
+  <!-- เนื้อหาหน้าเว็บทั้งหมด (เหมือนเดิม) -->
+  <div id="mainContent" class="opacity-0 transition-opacity duration-500">
+    <!-- ... ส่วนเนื้อหาทั้งหมดของเว็บคุณ ... -->
+  </div>
+      
+        <!-- Loading indicator -->
       <div id="loading" class="text-center py-8">
         <div
           class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
@@ -36,19 +54,29 @@
       </div>
 
       <!-- Statistics Cards -->
-      <div id="statsSection" class="hidden mb-8">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">
+      <div id="statsSection" class="hidden mb-2">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">
           สถิติข้อมูลการสอบธรรมศึกษา
         </h2>
-        <div id="statsCards" class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div id="statsCards" class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-3">
           <!-- Stats cards will be populated here -->
         </div>
+      </div>
+
+      <div class="container mx-auto px-4 py-4">
+        <button
+          id="toggleSearchBtn"
+          class="bg-blue-600 text-white px-4 py-2 rounded-full shadow hover:bg-blue-700 transition"
+        >
+          🔍 ค้นหาข้อมูล
+        </button>
       </div>
 
       <!-- Search Section -->
       <div
         id="searchSection"
-        class="hidden bg-white rounded-xl shadow-lg p-6 mb-8"
+        class="max-h-0 overflow-hidden bg-white rounded-xl shadow-lg p-6 mb-8 transition-all duration-300"
+        style="opacity: 0; padding-top: 0; padding-bottom: 0"
       >
         <h2 class="text-2xl font-semibold text-gray-800 mb-6">ค้นหาข้อมูล</h2>
 
@@ -111,8 +139,8 @@
         </div>
 
         <!-- Classroom Dropdown -->
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2"
+        <div class="mb-8">
+          <label class="block text-sm font-medium text-gray-700 mb-4"
             >เลือกห้องเรียน</label
           >
           <select
@@ -215,6 +243,16 @@
       </div>
     </div>
 
+    <!-- ปุ่มลอยกลับไปบนสุด -->
+    <button
+      id="scrollToTopBtn"
+      title="กลับไปบนสุด"
+      class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-opacity opacity-0 pointer-events-none"
+      style="z-index: 1000"
+    >
+      ⬆️
+    </button>
+
     <script>
       let allData = [];
       let currentFilter = "all";
@@ -263,20 +301,34 @@
           เอก: "bg-amber-600",
           ไม่มีรายชื่อสอบ: "bg-gray-500",
           สำเร็จนักธรรมเอกไปแล้ว: "bg-yellow-500",
+          รวมทั้งหมด: "bg-purple-600",
         };
 
         const statsContainer = document.getElementById("statsCards");
         statsContainer.innerHTML = "";
 
+        // รวมแค่ ตรี, โท, เอก เท่านั้น
+        const totalCount = stats.ตรี + stats.โท + stats.เอก;
+
+        const totalCard = document.createElement("div");
+        totalCard.className = "bg-white rounded-lg shadow-md p-4 text-center";
+        totalCard.innerHTML = `
+        <div class="w-12 h-12 ${colors["รวมทั้งหมด"]} rounded-full mx-auto mb-2 flex items-center justify-center">
+            <span class="text-white font-bold text-lg">${totalCount}</span>
+        </div>
+        <h3 class="font-semibold text-gray-800 text-sm">รวม ตรี, โท, เอก</h3>
+    `;
+        statsContainer.appendChild(totalCard);
+
         Object.entries(stats).forEach(([status, count]) => {
           const card = document.createElement("div");
           card.className = "bg-white rounded-lg shadow-md p-4 text-center";
           card.innerHTML = `
-                    <div class="w-12 h-12 ${colors[status]} rounded-full mx-auto mb-2 flex items-center justify-center">
-                        <span class="text-white font-bold text-lg">${count}</span>
-                    </div>
-                    <h3 class="font-semibold text-gray-800 text-sm">${status}</h3>
-                `;
+              <div class="w-12 h-12 ${colors[status]} rounded-full mx-auto mb-2 flex items-center justify-center">
+                  <span class="text-white font-bold text-lg">${count}</span>
+              </div>
+              <h3 class="font-semibold text-gray-800 text-sm">${status}</h3>
+          `;
           statsContainer.appendChild(card);
         });
       }
@@ -525,13 +577,13 @@
             }[item.statust_test] || "bg-gray-100 text-gray-800";
 
           row.innerHTML = `
-      <td class="px-4 py-3 text-sm text-gray-900">${index + 1}</td>
-      <td class="px-4 py-3 text-sm text-gray-900">${item.gender}</td>
-      <td class="px-4 py-3 text-sm text-gray-900">${item.name}</td>
-      <td class="px-4 py-3 text-sm font-medium text-gray-900">${
+      <td class="px-4 py-3 text-xs text-gray-900">${index + 1}</td>
+      <td class="px-4 py-3 text-xs text-gray-900">${item.gender}</td>
+      <td class="px-4 py-3 text-xs text-gray-900">${item.name}</td>
+      <td class="px-4 py-3 text-xs font-medium text-gray-900">${
         item.surname
       }</td>
-      <td class="px-4 py-3 text-sm text-gray-900">${item.classroom}</td>
+      <td class="px-4 py-3 text-xs text-gray-900">${item.classroom}</td>
       <td class="px-4 py-3">
           <span class="px-2 py-1 rounded-full text-xs font-medium ${statusColor}">
               ${item.statust_test}
@@ -660,6 +712,68 @@
         // Initialize the application
         fetchData();
       });
+
+      const scrollToTopBtn = document.getElementById("scrollToTopBtn");
+
+      // แสดงปุ่มเมื่อเลื่อนหน้าจอเกิน 100px
+      window.addEventListener("scroll", () => {
+        if (window.scrollY > 100) {
+          scrollToTopBtn.classList.remove("opacity-0", "pointer-events-none");
+          scrollToTopBtn.classList.add("opacity-100", "pointer-events-auto");
+        } else {
+          scrollToTopBtn.classList.add("opacity-0", "pointer-events-none");
+          scrollToTopBtn.classList.remove("opacity-100", "pointer-events-auto");
+        }
+      });
+
+      // เมื่อกดปุ่ม ให้เลื่อนหน้าจอกลับไปบนสุดแบบนุ่มนวล
+      scrollToTopBtn.addEventListener("click", () => {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      });
+
+      const toggleBtn = document.getElementById("toggleSearchBtn");
+      const searchSection = document.getElementById("searchSection");
+
+      toggleBtn.addEventListener("click", () => {
+        if (
+          searchSection.style.maxHeight &&
+          searchSection.style.maxHeight !== "0px"
+        ) {
+          // ซ่อนริบบ้อน
+          searchSection.style.maxHeight = "0";
+          searchSection.style.opacity = "0";
+          searchSection.style.paddingTop = "0";
+          searchSection.style.paddingBottom = "0";
+        } else {
+          // แสดงริบบ้อน
+          searchSection.style.maxHeight = searchSection.scrollHeight + "px";
+          searchSection.style.opacity = "1";
+          searchSection.style.paddingTop = "";
+          searchSection.style.paddingBottom = "";
+        }
+      });
+
+    window.addEventListener("load", () => {
+      setTimeout(() => {
+        const splash = document.getElementById("splashScreen");
+        const main = document.getElementById("mainContent");
+
+        splash.style.opacity = 0;
+        splash.style.pointerEvents = "none";
+
+        // แสดงเนื้อหาเว็บแบบนุ่มนวล
+        main.style.opacity = 1;
+
+        // ซ่อน splash หลังแอนิเมชัน (500ms)
+        setTimeout(() => {
+          splash.style.display = "none";
+        }, 500);
+      }, 2000); // 2 วินาที
+    });
+
     </script>
   </body>
 </html>
