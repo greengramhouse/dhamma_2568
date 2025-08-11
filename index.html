@@ -217,6 +217,11 @@
                 >
                   สถานะ
                 </th>
+                <th
+                  class="px-4 py-3 text-left text-sm font-semibold text-gray-700"
+                >
+                  ผลสอบ
+                </th>
               </tr>
             </thead>
             <tbody id="classroomTableBody">
@@ -362,35 +367,33 @@
 
       // Filter by status
       // Filter by status
-      function filterByStatus(status) {
-        currentFilter = status;
+function filterByStatus(status) {
+  currentFilter = status;
 
-        // Update button styles
-        document.querySelectorAll(".status-btn").forEach((btn) => {
-          btn.classList.remove("active", "bg-blue-600", "text-white");
-          btn.classList.add("bg-gray-200", "text-gray-700");
-        });
-        event.target.classList.add("active", "bg-blue-600", "text-white");
-        event.target.classList.remove("bg-gray-200", "text-gray-700");
+  // Update button styles
+  document.querySelectorAll(".status-btn").forEach((btn) => {
+    btn.classList.remove("active", "bg-blue-600", "text-white");
+    btn.classList.add("bg-gray-200", "text-gray-700");
+  });
+  event.target.classList.add("active", "bg-blue-600", "text-white");
+  event.target.classList.remove("bg-gray-200", "text-gray-700");
 
-        // ซ่อนตารางห้องเรียนทุกครั้งที่มีการค้นหาจากส่วนนี้
-        hideClassroomResults();
+  // ซ่อนตารางห้องเรียนทุกครั้งที่มีการค้นหาจากส่วนนี้
+  hideClassroomResults();
 
-        // Apply filter
-        const nameSearch = document
-          .getElementById("nameSearch")
-          .value.toLowerCase();
-        if (nameSearch.length > 0) {
-          searchByName(nameSearch);
-        } else if (status !== "all") {
-          const filtered = allData.filter(
-            (item) => item.statust_test === status
-          );
-          displaySearchResults(filtered);
-        } else {
-          hideResults();
-        }
-      }
+  // Apply filter
+  const nameSearch = document.getElementById("nameSearch").value.toLowerCase();
+  if (nameSearch.length > 0) {
+    searchByName(nameSearch);
+  } else if (status === "all") {
+    // แสดงข้อมูลทั้งหมด
+    displaySearchResults(allData);
+  } else {
+    const filtered = allData.filter((item) => item.statust_test === status);
+    displaySearchResults(filtered);
+  }
+}
+
 
       // Search by name
       function normalizeThai(text) {
@@ -426,61 +429,84 @@
       }
 
       // Display search results as cards
-      function displaySearchResults(results) {
-        const container = document.getElementById("resultsContainer");
-        const resultsSection = document.getElementById("searchResults");
-        const noResults = document.getElementById("noResults");
+function displaySearchResults(results) {
+  const container = document.getElementById("resultsContainer");
+  const resultsSection = document.getElementById("searchResults");
+  const noResults = document.getElementById("noResults");
 
-        if (results.length === 0) {
-          resultsSection.classList.add("hidden");
-          noResults.classList.remove("hidden");
-          return;
-        }
+  if (results.length === 0) {
+    resultsSection.classList.add("hidden");
+    noResults.classList.remove("hidden");
+    return;
+  }
 
-        noResults.classList.add("hidden");
-        resultsSection.classList.remove("hidden");
+  noResults.classList.add("hidden");
+  resultsSection.classList.remove("hidden");
 
-        container.innerHTML = "";
+  container.innerHTML = "";
 
-        results.forEach((item) => {
-          const card = document.createElement("div");
-          card.className =
-            "bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200";
+  results.forEach((item) => {
+    const card = document.createElement("div");
+    card.className =
+      "bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200";
 
-          const isCompleted =
-            item.statust_test && item.statust_test.includes("สำเร็จ");
-          const hasExamRight = item.test === "TRUE" || item.test === true;
+    const isCompleted =
+      item.statust_test && item.statust_test.includes("สำเร็จ");
+    const hasExamRight = item.test === "TRUE" || item.test === true;
 
-          const genderRaw = (item.gender || "").toString().toLowerCase();
-          let genderEmoji, genderIcon;
+    const genderRaw = (item.gender || "").toString().toLowerCase();
+    let genderEmoji, genderIcon;
 
-          if (genderRaw.includes("ช")) {
-            genderEmoji = "♂️";
-            genderIcon = "🧑"; // หรือ 👨
-          } else if (genderRaw.includes("ห")) {
-            genderEmoji = "♀️";
-            genderIcon = "👩";
-          } else {
-            genderEmoji = "⚧";
-            genderIcon = "👤";
-          }
+    if (genderRaw.includes("ช")) {
+      genderEmoji = "♂️";
+      genderIcon = "🧑"; // หรือ 👨
+    } else if (genderRaw.includes("ห")) {
+      genderEmoji = "♀️";
+      genderIcon = "👩";
+    } else {
+      genderEmoji = "⚧";
+      genderIcon = "👤";
+    }
 
-          const statusColor =
-            {
-              ตรี: "bg-green-100 text-green-800",
-              โท: "bg-blue-100 text-blue-800",
-              เอก: "bg-amber-100 text-amber-800",
-              ไม่มีรายชื่อสอบ: "bg-gray-100 text-gray-800",
-              สำเร็จนักธรรมเอกแล้ว: "bg-yellow-100 text-yellow-800",
-            }[item.statust_test] || "bg-gray-100 text-gray-800";
+    const statusColor =
+      {
+        ตรี: "bg-green-100 text-green-800",
+        โท: "bg-blue-100 text-blue-800",
+        เอก: "bg-amber-100 text-amber-800",
+        ไม่มีรายชื่อสอบ: "bg-gray-100 text-gray-800",
+        สำเร็จนักธรรมเอกแล้ว: "bg-yellow-100 text-yellow-800",
+      }[item.statust_test] || "bg-gray-100 text-gray-800";
 
-          const examInfo = isCompleted
-            ? '<p class="text-yellow-600 font-medium">🏆 ไม่ต้องสอบแล้ว</p>'
-            : hasExamRight
-            ? '<p class="text-green-600 font-medium">✓ มีสิทธิ์สอบ</p>'
-            : '<p class="text-red-600 font-medium">✗ ไม่มีสิทธิ์สอบ</p>';
+    const examInfo = isCompleted
+      ? '<p class="text-yellow-600 font-medium">🏆 ไม่ต้องสอบแล้ว</p>'
+      : hasExamRight
+      ? '<p class="text-green-600 font-medium">✓ มีสิทธิ์สอบ</p>'
+      : '<p class="text-red-600 font-medium">✗ ไม่มีสิทธิ์สอบ</p>';
 
-          card.innerHTML = `
+    // เพิ่มส่วนผลสอบจาก item.resault
+let examResultInfo = "";
+switch ((item.resualt || "").trim()) {
+  case "สอบผ่าน":
+    examResultInfo = `<p class="text-green-700 font-medium">✓ สอบผ่าน</p>`;
+    break;
+  case "สอบไม่ผ่าน":
+    examResultInfo = `<p class="text-red-700 font-medium">✗ สอบไม่ผ่าน</p>`;
+    break;
+  case "ไม่ได้เข้าสอบ":
+    examResultInfo = `<p class="text-gray-500 font-medium">– ไม่ได้เข้าสอบ</p>`;
+    break;
+  case "รอผลสอบ":
+    examResultInfo = `<p class="text-yellow-600 font-medium">⏳ รอผลสอบ</p>`;
+    break;
+  case "กำลังจะสอบ":
+    examResultInfo = `<p class="text-blue-600 font-medium">🕒 กำลังจะสอบ</p>`;
+    break;
+  default:
+    examResultInfo = "";
+}
+
+
+    card.innerHTML = `
       <div class="flex justify-between items-start mb-3">
         <span class="px-3 py-1 rounded-full text-xs font-medium ${statusColor}">
           ${item.statust_test || "-"}
@@ -488,38 +514,35 @@
         <span class="text-sm text-gray-500">${item.classroom || "-"}</span>
       </div>
 
-<div class="flex items-center gap-3 mb-2">
-  <span class="inline-flex w-9 h-9 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 text-xl">
-    ${genderIcon}
-  </span>
-  <h3 class="text-lg font-semibold text-gray-800 m-0">
-    ${item.name || "-"} ${item.surname || ""}
-  </h3>
-</div>
-
+      <div class="flex items-center gap-3 mb-2">
+        <span class="inline-flex w-9 h-9 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 text-xl">
+          ${genderIcon}
+        </span>
+        <h3 class="text-lg font-semibold text-gray-800 m-0">
+          ${item.name || "-"} ${item.surname || ""}
+        </h3>
+      </div>
 
       <div class="text-sm text-gray-600 space-y-2">
         <p class="flex items-center gap-2">
           <span class="inline-flex w-6 h-6 items-center justify-center text-lg">${genderEmoji}</span>
-          <span><span class="font-medium">เพศ:</span> ${
-            item.gender || "-"
-          }</span>
+          <span><span class="font-medium">เพศ:</span> ${item.gender || "-"}</span>
         </p>
 
         <p class="flex items-center gap-2">
           <span class="inline-flex w-6 h-6 items-center justify-center text-lg">🎓</span>
-          <span><span class="font-medium">ระดับชั้น:</span> ${
-            item.status_class || "-"
-          }</span>
+          <span><span class="font-medium">ระดับชั้น:</span> ${item.status_class || "-"}</span>
         </p>
 
         ${examInfo}
+        ${examResultInfo}
       </div>
     `;
 
-          container.appendChild(card);
-        });
-      }
+    container.appendChild(card);
+  });
+}
+
 
       // Display classroom results as table
       // กำหนดฟอนต์ pdfMake (ใช้ตามที่คุณให้มา)
@@ -576,6 +599,14 @@
               สำเร็จนักธรรมเอกแล้ว: "bg-yellow-100 text-yellow-800",
             }[item.statust_test] || "bg-gray-100 text-gray-800";
 
+        const resualtColor = {
+          รอผลสอบ: "bg-yellow-700 text-yellow-100",
+          กำลังจะสอบ: "bg-blue-700 text-blue-100",
+          สอบผ่าน: "bg-green-700 text-green-100",
+          สอบไม่ผ่าน: "bg-red-700 text-red-100",
+        }[item.resualt] || "bg-gray-700 text-gray-100";
+
+
           row.innerHTML = `
       <td class="px-4 py-3 text-xs text-gray-900">${index + 1}</td>
       <td class="px-4 py-3 text-xs text-gray-900">${item.gender}</td>
@@ -587,6 +618,11 @@
       <td class="px-4 py-3">
           <span class="px-2 py-1 rounded-full text-xs font-medium ${statusColor}">
               ${item.statust_test}
+          </span>
+      </td>
+      <td class="px-4 py-3">
+          <span class="px-2 py-1 rounded-full text-xs font-medium ${resualtColor}">
+              ${item.resualt}
           </span>
       </td>
     `;
